@@ -10,8 +10,5 @@ public class GameFrame extends JFrame {
         this.setResizable(false);
         this.pack(); // Dopasowanie rozmiaru do panelu
         this.setVisible(true);
-
-
-
     }
 }
