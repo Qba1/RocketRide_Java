@@ -11,6 +11,7 @@ import java.util.Map;
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Image rocketImage;
     private Image asteroidImage;
+    private Image backgroudImage;
     private Map<String, Image> levelBackgrounds = new HashMap<>();
 
     private int rocketX = 0;
@@ -51,6 +52,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         try {
             rocketImage = ImageIO.read(getClass().getClassLoader().getResource("resources/rocket.png"));
             asteroidImage = ImageIO.read(getClass().getClassLoader().getResource("resources/pixelmeteor.png"));
+            backgroudImage = ImageIO.read(getClass().getClassLoader().getResource("resources/background.png"));
 
             for (String levelName : levelNames) {
                 levelBackgrounds.put(levelName, ImageIO.read(getClass().getClassLoader().getResource("resources/" + levelName.toLowerCase() + ".png")));
@@ -100,13 +102,63 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawMenu(Graphics g) {
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 36));
-        g.drawString("Rocket Ride", WIDTH / 2 - 150, HEIGHT / 2 - 100);
+        // Narysuj tło
+        g.drawImage(backgroudImage, 0, 0, getWidth(), getHeight(), null);
 
-        g.setFont(new Font("Arial", Font.PLAIN, 24));
+        // Kolor tekstu i czcionka dla tytułu
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 72));
+
+        // Wyśrodkuj tytuł
+        FontMetrics fmTitle = g.getFontMetrics();
+        int titleWidth = fmTitle.stringWidth("Rocket Ride");
+        int titleHeight = fmTitle.getHeight();
+
+        // Narysuj obramowanie wokół tytułu
+        g.setColor(new Color(100, 150, 255, 200)); // Półprzezroczysty niebieski
+        g.fillRoundRect((WIDTH - titleWidth) / 2 - 20, HEIGHT / 2 - 150 - titleHeight + 10,
+                titleWidth + 40, titleHeight + 20, 20, 20);
+
+        // Obramowanie
+        g.setColor(new Color(255, 255, 255, 200)); // Białe, lekko przezroczyste
+        g.drawRoundRect((WIDTH - titleWidth) / 2 - 20, HEIGHT / 2 - 150 - titleHeight + 10,
+                titleWidth + 40, titleHeight + 20, 20, 20);
+
+        // Narysuj tytuł
+        g.setColor(Color.WHITE);
+        g.drawString("Rocket Ride", (WIDTH - titleWidth) / 2, HEIGHT / 2 - 150);
+
+        // Ustawienia czcionki dla poziomów
+        g.setFont(new Font("Arial", Font.PLAIN, 36));
+
+        // Ulepszone wyświetlanie poziomów
+        int startY = HEIGHT / 2;
         for (int i = 1; i <= 8; i++) {
-            g.drawString("Level " + i + ": " + levelNames[i - 1], WIDTH / 2 - 200, HEIGHT / 2 + i * 30 - 80);
+            String levelText = String.format("Level %d: %s", i, levelNames[i - 1]);
+
+            // Oblicz szerokość tekstu, aby wyśrodkować
+            FontMetrics fm = g.getFontMetrics();
+            int textWidth = fm.stringWidth(levelText);
+            int textHeight = fm.getHeight();
+
+            // Dodaj obramowanie dla poziomów
+            g.setColor(new Color(100, 150, 255, 220)); // Półprzezroczysty niebieski
+            g.fillRoundRect((WIDTH - textWidth) / 2 - 10, startY + (i - 1) * 50 - textHeight + 10,
+                    textWidth + 20, textHeight + 10, 15, 15);
+
+            // Biała obwódka
+            g.setColor(new Color(255, 255, 255, 200)); // Białe, lekko przezroczyste
+            g.drawRoundRect((WIDTH - textWidth) / 2 - 10, startY + (i - 1) * 50 - textHeight + 10,
+                    textWidth + 20, textHeight + 10, 15, 15);
+
+            // Kolor tekstu poziomów
+//            if (i <= unlockedLevels) {
+//                g.setColor(new Color(50, 50, 150)); // Ciemnoniebieski kolor tekstu
+//            } else {
+//                g.setColor(new Color(100, 100, 100)); // Szary kolor dla zablokowanych poziomów
+//            }
+
+            g.drawString(levelText, (WIDTH - textWidth) / 2, startY + (i - 1) * 50);
         }
     }
 
