@@ -11,10 +11,10 @@ import java.util.Map;
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Image rocketImage;
     private Image asteroidImage;
-    private Map<String, Image> levelBackgrounds = new HashMap<>(); // Mapowanie poziom -> tło
+    private Map<String, Image> levelBackgrounds = new HashMap<>();
 
-    private int rocketX = 50;
-    private int rocketY = 250;
+    private int rocketX = 0;
+    private int rocketY = 600;
     private final int ROCKET_WIDTH = 200;
     private final int ROCKET_HEIGHT = 100;
 
@@ -24,38 +24,34 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     static int WIDTH = 1280;
     static int HEIGHT = 1024;
 
-    static int SPEED = 10; // Rakieta szybkość
-    private final int ASTEROID_SPEED = 5; // Asteroidy szybkość
+    static int SPEED = 15;
+    private int asteroidSpeed = 15;
 
     private Timer timer;
 
-    // Menu i poziomy
-    private boolean inGame = false; // Czy gra jest aktywna
-    private int currentLevel = 1;  // Aktualny poziom
-    private int asteroidCount = 0; // Liczba asteroid, które przeszły ekran
+    private boolean inGame = false;
+    private int currentLevel = 1;
+    private int asteroidCount = 0;
 
-    // Nazwy poziomów
     private final String[] levelNames = {
             "Merkury", "Wenus", "Ziemia", "Mars", "Jowisz", "Saturn", "Uran", "Neptun"
     };
 
-    // Sekwencje poziomów
     private List<List<Integer>> levelSequences = new ArrayList<>();
     private List<Integer> asteroidSequence = new ArrayList<>();
     private int sequenceIndex = 0;
 
-    // Lista asteroid w grze
     private List<Asteroid> asteroids = new ArrayList<>();
-    private int spawnDelay = 50; // Odstęp między asteroidami w tickach
+    private int spawnDelay = 25;
     private int spawnTimer = 0;
+
+    private final int[] asteroidsPerLevel = {10, 14, 18, 22, 26, 30, 34, 38};
 
     public GamePanel() {
         try {
-            // Wczytywanie obrazów
             rocketImage = ImageIO.read(getClass().getClassLoader().getResource("resources/rocket.png"));
             asteroidImage = ImageIO.read(getClass().getClassLoader().getResource("resources/pixelmeteor.png"));
 
-            // Wczytywanie teł
             for (String levelName : levelNames) {
                 levelBackgrounds.put(levelName, ImageIO.read(getClass().getClassLoader().getResource("resources/" + levelName.toLowerCase() + ".png")));
             }
@@ -67,15 +63,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         this.setFocusable(true);
         this.addKeyListener(this);
 
-        // Definiowanie sekwencji poziomów
-        levelSequences.add(List.of(0, 1, 2, 3, 4, 5, 6, 7)); // Poziom 1
-        levelSequences.add(List.of(0, 2, 4, 6, 1, 3, 5, 7)); // Poziom 2
-        levelSequences.add(List.of(7, 6, 5, 4, 3, 2, 1, 0)); // Poziom 3
-        levelSequences.add(List.of(0, 3, 5, 1, 6, 4, 7, 2)); // Poziom 4
-        levelSequences.add(List.of(0, 0, 1, 1, 2, 2, 3, 3)); // Poziom 5
-        levelSequences.add(List.of(7, 7, 6, 6, 5, 5, 4, 4)); // Poziom 6
-        levelSequences.add(List.of(0, 7, 1, 6, 2, 5, 3, 4)); // Poziom 7
-        levelSequences.add(List.of(4, 2, 6, 0, 7, 1, 3, 5)); // Poziom 8
+        levelSequences.add(List.of(1, 2, 1, 7, 1, 4, 2, 1));
+        levelSequences.add(List.of(0, 2, 4, 6, 1, 3, 5, 7));
+        levelSequences.add(List.of(7, 1, 5, 4, 1, 5, 1, 0));
+        levelSequences.add(List.of(0, 3, 5, 1, 6, 4, 7, 2));
+        levelSequences.add(List.of(0, 0, 1, 1, 2, 2, 3, 3));
+        levelSequences.add(List.of(7, 7, 6, 6, 5, 5, 4, 4));
+        levelSequences.add(List.of(0, 7, 1, 6, 2, 5, 3, 4));
+        levelSequences.add(List.of(4, 2, 6, 0, 7, 1, 3, 5));
 
         timer = new Timer(20, this);
         timer.start();
@@ -90,21 +85,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
-        // Rysowanie tła dla aktualnego poziomu
         g.drawImage(levelBackgrounds.get(levelNames[currentLevel - 1]), 0, 0, getWidth(), getHeight(), null);
-
-        // Rysowanie rakiety
         g.drawImage(rocketImage, rocketX, rocketY, ROCKET_WIDTH, ROCKET_HEIGHT, null);
 
-        // Rysowanie asteroid
         for (Asteroid asteroid : asteroids) {
             g.drawImage(asteroidImage, asteroid.x, asteroid.y, ASTEROID_WIDTH, ASTEROID_HEIGHT, null);
         }
 
-        // Rysowanie paska progresu
         drawProgressBar(g);
 
-        // Rysowanie nazwy poziomu
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 36));
         g.drawString("Poziom: " + levelNames[currentLevel - 1], WIDTH - 300, 50);
@@ -126,7 +115,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g.fillRect(50, HEIGHT - 50, WIDTH - 100, 20);
 
         g.setColor(Color.GREEN);
-        g.fillRect(50, HEIGHT - 50, (int) ((WIDTH - 100) * (asteroidCount / 20.0)), 20);
+        g.fillRect(50, HEIGHT - 50, (int) ((WIDTH - 100) * (asteroidCount / (float) asteroidsPerLevel[currentLevel - 1])), 20);
 
         g.setColor(Color.WHITE);
         g.drawRect(50, HEIGHT - 50, WIDTH - 100, 20);
@@ -139,26 +128,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
-        // Obsługa spawnowania asteroid
         spawnTimer++;
         if (spawnTimer >= spawnDelay) {
             spawnTimer = 0;
             spawnAsteroid();
         }
 
-        // Aktualizacja pozycji asteroid
         List<Asteroid> toRemove = new ArrayList<>();
         for (Asteroid asteroid : asteroids) {
-            asteroid.x -= ASTEROID_SPEED;
+            asteroid.x -= asteroidSpeed;
 
-            // Sprawdzanie kolizji
             if (checkCollision(asteroid)) {
                 timer.stop();
                 JOptionPane.showMessageDialog(this, "Game Over!");
                 System.exit(0);
             }
 
-            // Usuwanie asteroidy, gdy wyleci poza ekran
             if (asteroid.x + ASTEROID_WIDTH < 0) {
                 asteroidCount++;
                 toRemove.add(asteroid);
@@ -167,10 +152,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         asteroids.removeAll(toRemove);
 
-        // Sprawdzenie, czy poziom został ukończony
-        if (asteroidCount >= 20) {
+        if (asteroidCount >= asteroidsPerLevel[currentLevel - 1]) {
             asteroidCount = 0;
-            nextLevel();
+            showLevelCompleteDialog();
         }
 
         repaint();
@@ -186,20 +170,41 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private boolean checkCollision(Asteroid asteroid) {
-        Rectangle rocketBounds = new Rectangle(rocketX, rocketY, ROCKET_WIDTH, ROCKET_HEIGHT);
-        Rectangle asteroidBounds = new Rectangle(asteroid.x, asteroid.y, ASTEROID_WIDTH, ASTEROID_HEIGHT);
+        Rectangle rocketBounds = new Rectangle(rocketX, rocketY, ROCKET_WIDTH - 20, ROCKET_HEIGHT - 20);
+        Rectangle asteroidBounds = new Rectangle(asteroid.x, asteroid.y, ASTEROID_WIDTH - 10, ASTEROID_HEIGHT - 10);
 
         return rocketBounds.intersects(asteroidBounds);
+    }
+
+    private void showLevelCompleteDialog() {
+        int option = JOptionPane.showOptionDialog(
+                this,
+                "Gratulacje! Ukończyłeś poziom " + levelNames[currentLevel - 1] + "!\nNastępny poziom?",
+                "Poziom ukończony",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                new String[]{"TAK", "MENU GŁÓWNE"},
+                "TAK"
+        );
+
+        if (option == JOptionPane.YES_OPTION) {
+            nextLevel();
+        } else {
+            inGame = false;
+            repaint();
+        }
     }
 
     private void nextLevel() {
         currentLevel++;
         if (currentLevel > levelNames.length) {
-            JOptionPane.showMessageDialog(this, "You completed the game!");
+            JOptionPane.showMessageDialog(this, "Gratulacje! Ukończyłeś całą grę!");
             System.exit(0);
         }
         asteroidSequence = new ArrayList<>(levelSequences.get(currentLevel - 1));
         sequenceIndex = 0;
+        asteroidSpeed += 5; // Przyspieszenie asteroid
     }
 
     @Override
