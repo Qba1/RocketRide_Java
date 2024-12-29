@@ -50,6 +50,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int spawnTimer = 0;
 
     private final int[] asteroidsPerLevel = {10, 14, 18, 22, 26, 30, 34, 38};
+    private final int[] asteroidSpeedsPerLevel = {10, 12, 14, 16, 18, 20, 22, 24};
 
     private final Map<String, String[]> quizQuestions = Map.of(
             "Kto był pierwszym człowiekiem w kosmosie?",
@@ -236,6 +237,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         asteroidCount = 0;
         asteroidSequence.clear();
         asteroids.clear();
+        asteroidSpeed = asteroidSpeedsPerLevel[0];
         repaint();
     }
 
@@ -267,7 +269,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         asteroidSequence = new ArrayList<>(levelSequences.get(currentLevel - 1));
         sequenceIndex = 0;
-        asteroidSpeed += 5;
+        asteroidSpeed = asteroidSpeedsPerLevel[currentLevel - 1];
     }
 
     @Override
@@ -275,9 +277,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (!inGame) {
             if (e.getKeyCode() >= KeyEvent.VK_1 && e.getKeyCode() <= KeyEvent.VK_8) {
                 currentLevel = e.getKeyCode() - KeyEvent.VK_0;
-
-
                 asteroidSequence = new ArrayList<>(levelSequences.get(currentLevel - 1));
+                asteroidSpeed = asteroidSpeedsPerLevel[currentLevel - 1];
                 inGame = true;
             }
         } else {
