@@ -60,15 +60,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             new String[]{"Jowisz", "Saturn", "Ziemia", "Mars"},
 
             "Jak nazywa się pierwszy sztuczny satelita Ziemi?",
-            new String[]{"Sputnik 1", "Voyager 1", "Hubble", "Luna 2"}
-    );
+            new String[]{"Sputnik 1", "Voyager 1", "Hubble", "Luna 2"},
 
+            "Która planeta jest najbliższa Słońcu?",
+            new String[]{"Merkury", "Wenus", "Ziemia", "Mars"},
+
+            "Ile planet znajduje się w Układzie Słonecznym?",
+            new String[]{"8", "7", "9", "10"},
+
+            "Który kraj jako pierwszy wylądował na Księżycu?",
+            new String[]{"USA", "ZSRR", "Chiny", "Indie"},
+
+            "Jak nazywa się największy księżyc Jowisza?",
+            new String[]{"Ganimedes", "Europa", "Io", "Callisto"},
+
+            "Co to jest Międzynarodowa Stacja Kosmiczna?",
+            new String[]{"Orbitalne laboratorium", "Satelita telekomunikacyjny", "Stacja na Marsie", "Teleskop kosmiczny"}
+    );
     private final Map<String, Integer> correctAnswers = Map.of(
             "Kto był pierwszym człowiekiem w kosmosie?", 0,
             "Która planeta jest największa w Układzie Słonecznym?", 0,
-            "Jak nazywa się pierwszy sztuczny satelita Ziemi?", 0
+            "Jak nazywa się pierwszy sztuczny satelita Ziemi?", 0,
+            "Która planeta jest najbliższa Słońcu?", 0,
+            "Ile planet znajduje się w Układzie Słonecznym?", 0,
+            "Który kraj jako pierwszy wylądował na Księżycu?", 0,
+            "Jak nazywa się największy księżyc Jowisza?", 0,
+            "Co to jest Międzynarodowa Stacja Kosmiczna?", 0
     );
-
     private final Random random = new Random();
 
     public GamePanel() {
