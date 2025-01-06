@@ -1,8 +1,10 @@
 import javax.swing.*;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +38,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int asteroidCount = 0;
     private int lives = 3;
     private boolean quizUsed = false;
+
+    private Clip backgroundMusicClip;
 
     private final String[] levelNames = {
             "Merkury", "Wenus", "Ziemia", "Mars", "Jowisz", "Saturn", "Uran", "Neptun"
@@ -101,6 +105,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        playBackgroundMusic("resources/faded.wav");
 
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         this.setFocusable(true);
@@ -199,13 +205,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void drawProgressBar(Graphics g) {
         g.setColor(Color.GRAY);
-        g.fillRect(50, HEIGHT - 50, WIDTH - 100, 20);
+        g.fillRect(50, HEIGHT - 25, WIDTH - 100, 20);
 
         g.setColor(Color.GREEN);
-        g.fillRect(50, HEIGHT - 50, (int) ((WIDTH - 100) * (asteroidCount / (float) asteroidsPerLevel[currentLevel - 1])), 20);
+        g.fillRect(50, HEIGHT - 25, (int) ((WIDTH - 100) * (asteroidCount / (float) asteroidsPerLevel[currentLevel - 1])), 20);
 
         g.setColor(Color.WHITE);
-        g.drawRect(50, HEIGHT - 50, WIDTH - 100, 20);
+        g.drawRect(50, HEIGHT - 25, WIDTH - 100, 20);
     }
 
     @Override
@@ -221,36 +227,45 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             spawnAsteroid();
         }
 
+        // Utworzenie tymczasowej listy do usunięcia
         List<Asteroid> toRemove = new ArrayList<>();
-        for (Asteroid asteroid : asteroids) {
-            asteroid.x -= asteroidSpeed;
 
+        // Iteracja nad asteroidami
+        for (Asteroid asteroid : new ArrayList<>(asteroids)) { // Kopia listy, aby uniknąć błędu modyfikacji
+            asteroid.move(asteroidSpeed);
+
+            // Sprawdzenie kolizji z rakietą
             if (checkCollision(asteroid)) {
                 lives--;
                 toRemove.add(asteroid);
+
                 if (lives == 0 && !quizUsed) {
                     showQuiz();
                 } else if (lives == 0) {
                     gameOver();
+                    return; // Przerwanie dalszej iteracji po zakończeniu gry
                 }
             }
 
-            if (asteroid.x + ASTEROID_WIDTH < 0) {
+            // Sprawdzenie, czy asteroida jest poza ekranem
+            if (asteroid.isOffScreen()) {
                 asteroidCount++;
                 toRemove.add(asteroid);
             }
         }
 
+        // Usunięcie asteroid poza iteracją
         asteroids.removeAll(toRemove);
 
+        // Sprawdzenie ukończenia poziomu
         if (asteroidCount == asteroidsPerLevel[currentLevel - 1]) {
-            repaint();
             asteroidCount = 0;
             showLevelCompleteDialog();
         }
 
         repaint();
     }
+
 
     private void spawnAsteroid() {
         int segmentHeight = HEIGHT / 8;
@@ -279,12 +294,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             lives = 1;
             JOptionPane.showMessageDialog(this, "Poprawna odpowiedź! Zyskujesz dodatkowe życie.");
         } else {
+            asteroids.clear();
             gameOver();
         }
     }
 
     private void gameOver() {
         JOptionPane.showMessageDialog(this, "Gra zakończona! Wracasz do menu.");
+        asteroids.clear();
         resetGame();
     }
 
@@ -315,6 +332,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (option == JOptionPane.YES_OPTION) {
             nextLevel();
         } else {
+            asteroids.clear();
             inGame = false;
             repaint();
         }
@@ -339,6 +357,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 currentLevel = e.getKeyCode() - KeyEvent.VK_0;
                 asteroidSequence = new ArrayList<>(levelSequences.get(currentLevel - 1));
                 asteroidSpeed = asteroidSpeedsPerLevel[currentLevel - 1];
+                asteroids.clear();
                 inGame = true;
             }
         } else {
@@ -356,12 +375,47 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyTyped(KeyEvent e) {}
 
+    private void playBackgroundMusic(String filePath) {
+        try {
+            URL url = getClass().getClassLoader().getResource(filePath);
+            if (url == null) {
+                throw new RuntimeException("Audio file not found: " + filePath);
+            }
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(url);
+            backgroundMusicClip = AudioSystem.getClip();
+            backgroundMusicClip.open(audioStream);
+            backgroundMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static class Asteroid {
-        int x, y;
+        private int x, y;
+        private final int width = 100;
+        private final int height = 100;
 
         public Asteroid(int x, int y) {
             this.x = x;
             this.y = y;
         }
+
+        public void move(int speed) {
+            x -= speed; // Przesuwa asteroidę w lewo o określoną prędkość
+        }
+
+        public boolean isOffScreen() {
+            return x + width < 0; // Sprawdza, czy asteroida opuściła ekran po lewej stronie
+        }
+
+        public void draw(Graphics g) {
+            g.setColor(Color.GRAY);
+            g.fillOval(x, y, width, height); // Rysuje asteroidę jako owal
+        }
+
+        public Rectangle getBounds() {
+            return new Rectangle(x, y, width, height); // Zwraca prostokąt kolizji
+        }
     }
+
 }
