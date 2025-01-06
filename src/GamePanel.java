@@ -192,12 +192,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g.drawRoundRect((WIDTH - textWidth) / 2 - 10, startY + (i - 1) * 50 - textHeight + 10,
                     textWidth + 20, textHeight + 10, 15, 15);
 
-            // Kolor tekstu poziomów
-//            if (i <= unlockedLevels) {
-//                g.setColor(new Color(50, 50, 150)); // Ciemnoniebieski kolor tekstu
-//            } else {
-//                g.setColor(new Color(100, 100, 100)); // Szary kolor dla zablokowanych poziomów
-//            }
 
             g.drawString(levelText, (WIDTH - textWidth) / 2, startY + (i - 1) * 50);
         }
@@ -249,7 +243,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         asteroids.removeAll(toRemove);
 
-        if (asteroidCount >= asteroidsPerLevel[currentLevel - 1]) {
+        if (asteroidCount == asteroidsPerLevel[currentLevel - 1]) {
+            repaint();
             asteroidCount = 0;
             showLevelCompleteDialog();
         }
@@ -294,6 +289,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void resetGame() {
+        asteroids.clear();
         inGame = false;
         lives = 3;
         currentLevel = 1;
@@ -325,6 +321,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void nextLevel() {
+        asteroids.clear();
         currentLevel++;
         if (currentLevel > levelNames.length) {
             JOptionPane.showMessageDialog(this, "Gratulacje! Ukończyłeś całą grę!");
